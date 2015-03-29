@@ -29,7 +29,8 @@ angular.module('myRedisApp')
     $scope.$watch('logs', function () {
         localStorageService.set('logs', $scope.logs);
     }, true);
-
+    
+    // Main method for executing commands.
     $scope.addCommand = function () {
         addLog($scope.command);
         var commandToExecute = $scope.command.split(' ');
@@ -122,9 +123,8 @@ angular.module('myRedisApp')
             raiseError();
         }
         
-        // Finding all relevant keys.
+        // Finding all relevant keys
         var pattern = new RegExp(inputArray[1]);
-        console.log(pattern);
         var resultArray = [];
         Object.keys($scope.commands).forEach(function (key) {
             if (pattern.test(key)) {
@@ -132,8 +132,6 @@ angular.module('myRedisApp')
             }
         });
         
-        console.log(resultArray);
-        //Writing to CLI
         if (resultArray.length < 1) {
             $scope.command = '';
             return;
@@ -162,7 +160,7 @@ angular.module('myRedisApp')
     
     // Maintain max lines in log
     function maintainLogSize() {
-        if ($scope.logs.length > MAX_LOG_SIZE) {
+        while ($scope.logs.length > MAX_LOG_SIZE) {
             $scope.logs.shift();
         }
     }
@@ -174,6 +172,5 @@ angular.module('myRedisApp')
         $scope.logs = [];
         }
     };
-    
     
   });

@@ -3,8 +3,11 @@
 describe('Controller: MainCtrl', function () {
 
   // load the controller's module
-  beforeEach(module('myRedisApp'));
-
+beforeEach(
+    module('myRedisApp'),
+    module('LocalStorageModule')
+  );
+    
   var MainCtrl,
     scope;
 
@@ -15,24 +18,5 @@ describe('Controller: MainCtrl', function () {
       $scope: scope
     });
   }));
-
-  it('should have no commands to start', function () {
-    expect(scope.commands.length).toBe(0);
-  });
-
-  it('should add commands on the log', function () {
-    scope.command = 'Test 1';
-    scope.addCommand();
-    expect(scope.commands.length).toBe(1);
-  });
-
-  it('should add two then clear the log', function () {
-    scope.command = 'Test 1';
-    scope.addCommand();
-    scope.command = 'Test 2';
-    scope.addCommand();
-    scope.removeCommand();
-    expect(scope.commands.length).toBe(0);
-  });
 
 });
