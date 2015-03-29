@@ -26,10 +26,12 @@ describe('Controller: MainCtrl', function () {
     expect(scope.todos.length).toBe(1);
   });
 
-  it('should add then remove an item from the list', function () {
+  it('should add two then clear the log', function () {
     scope.todo = 'Test 1';
     scope.addTodo();
-    scope.removeTodo(0);
+    scope.todo = 'Test 2';
+    scope.addTodo();
+    scope.removeTodo();
     expect(scope.todos.length).toBe(0);
   });
 
