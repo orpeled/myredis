@@ -16,23 +16,23 @@ describe('Controller: MainCtrl', function () {
     });
   }));
 
-  it('should have no items to start', function () {
-    expect(scope.todos.length).toBe(0);
+  it('should have no commands to start', function () {
+    expect(scope.commands.length).toBe(0);
   });
 
-  it('should add items to the list', function () {
-    scope.todo = 'Test 1';
-    scope.addTodo();
-    expect(scope.todos.length).toBe(1);
+  it('should add commands on the log', function () {
+    scope.command = 'Test 1';
+    scope.addCommand();
+    expect(scope.commands.length).toBe(1);
   });
 
   it('should add two then clear the log', function () {
-    scope.todo = 'Test 1';
-    scope.addTodo();
-    scope.todo = 'Test 2';
-    scope.addTodo();
-    scope.removeTodo();
-    expect(scope.todos.length).toBe(0);
+    scope.command = 'Test 1';
+    scope.addCommand();
+    scope.command = 'Test 2';
+    scope.addCommand();
+    scope.removeCommand();
+    expect(scope.commands.length).toBe(0);
   });
 
 });

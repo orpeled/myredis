@@ -11,14 +11,14 @@
 
 angular.module('myRedisApp')
   .controller('MainCtrl', function ($scope, localStorageService) {
-    var MAX_LOG_SIZE = 5;
-    // Todos
-    var todosInStore = localStorageService.get('todos');
+    var MAX_LOG_SIZE = 6;
+    // Commands
+    var commandsInStore = localStorageService.get('commands');
 
-    $scope.todos = todosInStore || {};
+    $scope.commands = commandsInStore || {};
 
-    $scope.$watch('todos', function () {
-        localStorageService.set('todos', $scope.todos);
+    $scope.$watch('commands', function () {
+        localStorageService.set('commands', $scope.commands);
     }, true);
 
     // Log
@@ -30,12 +30,12 @@ angular.module('myRedisApp')
         localStorageService.set('logs', $scope.logs);
     }, true);
 
-    $scope.addTodo = function () {
-        addLog($scope.todo);
-        var commandToExecute = $scope.todo.split(' ');
-        console.log(commandToExecute);
-        if (commandToExecute.length < 2 || commandToExecute.length > 3 ) {
-            $scope.todo = '';
+    $scope.addCommand = function () {
+        addLog($scope.command);
+        var commandToExecute = $scope.command.split(' ');
+        // Max 5 keys
+        if (commandToExecute.length < 1 || commandToExecute.length > 5 ) {
+            $scope.command = '';
             return;
         }
             switch(commandToExecute[0]) {
@@ -53,9 +53,7 @@ angular.module('myRedisApp')
                     break;
                     
                 case 'EXPIRE':
-                    if (commandToExecute.length === 3) {
-                            
-                    }
+                    $scope.logs.push('Sorry, didn\'t get to this');
                     break;   
                     
                 case 'EXISTS':
@@ -63,70 +61,116 @@ angular.module('myRedisApp')
                     break;
                     
                 case 'KEYS':
-                    if (commandToExecute.length === 3) {
-                    }
+                    keysCommand(commandToExecute);
                     break;
                     
-                default:
-                    $scope.todo = '';
             }    
     };
     
-    function getCommand(inputArray) {
-        // ADD PRINT TO CLI + ADD "" 
-        if (inputArray[1] in $scope.todos && inputArray.length === 2) {
-            console.log($scope.todos[inputArray[1]]);
-            $scope.todo = '';
-        }
-    }    
     function setCommand(inputArray) {
-        if (!(inputArray[1] in $scope.todos) && inputArray.length === 3) {
-            $scope.todos[inputArray[1]] = inputArray[2].replace(/"/g,'');
-            console.log($scope.todos[inputArray[1]]);
-            $scope.todo = '';
+        if (!(inputArray[1] in $scope.commands) && inputArray.length === 3) {
+            $scope.commands[inputArray[1]] = inputArray[2].replace(/"/g,'');
+            $scope.logs.push('OK');
+            maintainLogSize();
+            $scope.command = '';
         }
         
     }
+    
+    function getCommand(inputArray) {
+        if (inputArray[1] in $scope.commands && inputArray.length === 2) {
+            $scope.logs.push('"' + inputArray[1] + '"');
+        }
+        maintainLogSize();
+        $scope.command = '';
+    }    
+    
     // Supporting just one key at a time
     function delCommand(inputArray) {
-        if (inputArray[1] in $scope.todos && inputArray.length === 2) {
-            delete $scope.todos[inputArray[1]];
-            $scope.todo = '';
+        if (inputArray.length < 2) {
+            raiseError();
         }
+        var index, lengthOfArray;
+        for (index = 1, lengthOfArray = inputArray.length; index < lengthOfArray; index++) {
+            if (inputArray[index] in $scope.commands) {
+                delete $scope.commands[inputArray[1]];
+                $scope.logs.push('(integer) 1');
+            } else {
+                $scope.logs.push('(integer) 2');
+            }
+            maintainLogSize();
+        }
+        $scope.command = '';
+    }
+    
+    // Exists command
+    function existsCommand(inputArray) {
+        if (inputArray[1] in $scope.commands && inputArray.length === 2) {
+            $scope.command = '';
+            $scope.logs.push('(integer) 1');
+        } else {
+            $scope.logs.push('(integer) 0');
+        }
+        maintainLogSize();
+        $scope.command = '';
     
     }
     
-    function existsCommand(inputArray) {
-        if (inputArray[1] in $scope.todos && inputArray.length === 2) {
-            $scope.todo = '';
-            console.log('> (integer) 1');
-        } else {
-            console.log('> (integer) 2');
+    // Keys command
+    function keysCommand(inputArray) {
+        if (inputArray.length < 2) {
+            raiseError();
+        }
+        
+        // Finding all relevant keys.
+        var pattern = new RegExp(inputArray[1]);
+        console.log(pattern);
+        var resultArray = [];
+        Object.keys($scope.commands).forEach(function (key) {
+            if (pattern.test(key)) {
+                resultArray.push(key);
+            }
+        });
+        
+        console.log(resultArray);
+        //Writing to CLI
+        if (resultArray.length < 1) {
+            $scope.command = '';
+            return;
+        }
+        var index, len;
+        var numberOfKeyToDisplay = 1;
+        for (index = 0, len = resultArray.length; index < len; index++) {
+            $scope.logs.push(numberOfKeyToDisplay + ') "' + resultArray[index] + '"');
+            numberOfKeyToDisplay++;
         }
         maintainLogSize();
-    
+        $scope.command = '';
     }
     // Add to the log even if the command didn't go through.
     function addLog(logString) {
-        if (logString.length === 0) {
-            $scope.logs.push('>');
-        }
+        $scope.logs.push('> ' + logString);           
         maintainLogSize();
-        $scope.logs.push('> ' + logString);      
     }
     
+    // Raise error like Redis does
+    function raiseError() { 
+        $scope.logs.push('Error: lame syntax.');           
+        maintainLogSize();
+        $scope.command = '';
+    }
+    
+    // Maintain max lines in log
     function maintainLogSize() {
-        // Maintain max lines in log
         if ($scope.logs.length > MAX_LOG_SIZE) {
             $scope.logs.shift();
         }
     }
-
     
     // Clear method
-    $scope.removeTodo = function () {
-        if ($scope.todos.length !== 0) {
-        $scope.todos = {};
+    $scope.removeCommand = function () {
+        if ($scope.commands.length !== 0) {
+        $scope.commands = {};
         $scope.logs = [];
         }
     };
